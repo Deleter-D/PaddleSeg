@@ -1,8 +1,13 @@
 #!/bin/bash
 
+# configs/topformer/topformer_tiny_ade20k_512x512_160k.yml中
+# iters改为: 16000
+# batch_size改为: 16
+# learning_rate改为: 0.0003
+
 selected_gpus="0"
-configs_file=configs/quick_start/pp_liteseg_optic_disc_512x512_1k.yml
-output_dir=output/pp_liteseg_optic_disc_512x512_1k
+configs_file=configs/topformer/topformer_tiny_ade20k_512x512_160k.yml
+output_dir=output/topformer_tiny_ade20k_512x512_160k
 
 if [ ! -d ${output_dir} ]; then
     mkdir -p "$output_dir"
@@ -22,24 +27,9 @@ else
     exit 1
 fi
 
-# dataset preparation
-dataset=data/optic_disc_seg.zip
-dataset_dir=data/optic_disc_seg
-if [ -f "$dataset" ]; then
-    echo "Dataset is already downloaded."
-    if [ -d "$dataset_dir" ]; then
-        echo "Dataset is already unzipped."
-    else
-        unzip data/optic_disc_seg.zip -d data
-    fi
-else
-    wget -P data/ https://paddleseg.bj.bcebos.com/dataset/optic_disc_seg.zip
-    unzip data/optic_disc_seg.zip -d data
-fi
-
 # training standalone
 python tools/train.py --config ${configs_file} \
-    --save_interval 500 --do_eval \
+    --save_interval 1000 --do_eval \
     --use_vdl --save_dir ${output_dir} >"${output_dir}/train.log" 2>&1
 
 if [ $? -ne 0 ]; then
@@ -63,7 +53,7 @@ fi
 # inference
 python tools/predict.py --config ${configs_file} \
     --model_path ${output_dir}/best_model/model.pdparams \
-    --image_path data/optic_disc_seg/JPEGImages/H0002.jpg \
+    --image_path data/ADEChallengeData2016/images/validation/ADE_val_00000001.jpg \
     --save_dir ${output_dir}/result >"${output_dir}/infer.log" 2>&1
 
 if [ $? -ne 0 ]; then
